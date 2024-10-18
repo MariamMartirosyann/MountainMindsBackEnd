@@ -1,9 +1,21 @@
-const express = require('express')
+const express = require("express");
 
-const app = express()
+const app = express();
 
-app.use((req,res)=>{
-res.send("Hello!")
-})
+app.get("/user", (req, res) => {
+  res.send({ fistName: "Mariam", lastName: "Martirsoyan" });
+});
+app.post("/user", (req, res) => {
+  res.send("Data saved to DB");
+});
+app.delete("/user", (req, res) => {
+    res.send("Data deleted.");
+  });
+//handle all routes
+app.use((req, res) => {
+  res.send("Hello!");
+});
 
-app.listen(3000,()=>{console.log("Server is  listen to port 3000")})
+app.listen(3000, () => {
+  console.log("Server is  listen to port 3000");
+});
