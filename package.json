@@ -4,7 +4,7 @@
   "description": "App for smart armenians and not only",
   "main": "index.js",
   "scripts": {
-    "start":"node src/app.js",
+    "start": "node src/app.js",
     "dev": "nodemon src/app.js"
   },
   "keywords": [
@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.1",
+    "mongoose": "^8.7.2",
     "nodemon": "^3.1.7"
   }
 }
