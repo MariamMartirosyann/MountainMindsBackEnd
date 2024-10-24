@@ -40,22 +40,18 @@ app.post("/login", async (req, res) => {
     const { emailId, password } = req.body;
     const user = await User.findOne({ emailId: emailId });
     if (!user) {
-      throw new Error("Wrong Credenshials");
+      throw new Error("Wrong Credenshials ");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
+    const isPasswordValid = await user.validatePassword(password)
     if (isPasswordValid) {
-      //create JWT Token
-
-      const token = await jwt.sign({ _id: user._id }, "Mariam",{expiresIn:"1d"});
-
-      //Add the Token to cookie and send the response back to the user
-
-      res.cookie("token", token,{expires:new Date(Date.now() + 8 * 3600000)});
+      const token = await user.getJWT();
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+      });
       res.send("Login is succseful");
     } else {
-      throw new Error("Wrong Credenshials");
+      throw new Error("Wrong Credenshials ");
     }
   } catch (err) {
     res.status(400).send("Error adding a user:" + err.message);
@@ -75,8 +71,8 @@ app.get("/profile", userAuth, async (req, res) => {
 //Sending connection request
 
 app.post("/sendingConectionRequest", userAuth, async (req, res) => {
-  const user= req.user
-  res.send(user.firstName +" is sedning conection request");
+  const user = req.user;
+  res.send(user.firstName + " is sedning conection request");
 });
 
 connetcDB()
