@@ -3,10 +3,15 @@ const connetcDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middleWares/auth");
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
+
 //Sign up User
 app.post("/signup", async (req, res) => {
   try {
@@ -29,10 +34,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-//Login Usercccc
-
-
-
+//Login User
 app.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
@@ -41,8 +43,16 @@ app.post("/login", async (req, res) => {
       throw new Error("Wrong Credenshials");
     }
 
-    const isPasswordValid = bcrypt.compare(password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (isPasswordValid) {
+      //create JWT Token
+
+      const token = await jwt.sign({ _id: user._id }, "Mariam",{expiresIn:"1d"});
+
+      //Add the Token to cookie and send the response back to the user
+
+      res.cookie("token", token,{expires:new Date(Date.now() + 8 * 3600000)});
       res.send("Login is succseful");
     } else {
       throw new Error("Wrong Credenshials");
@@ -51,75 +61,22 @@ app.post("/login", async (req, res) => {
     res.status(400).send("Error adding a user:" + err.message);
   }
 });
-// Find a user
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
+
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const users = await User.find({ emailId: userEmail });
-    if (!users.lenght) {
-      res.status(404).send("User is not found.");
-    } else {
-      res.send(users);
-    }
-  } catch (err) {
-    res.status(400).send("Smth went wrong");
-  }
-});
-
-//Find by id and Delete
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    const user = await User.findByIdAndDelete(userId);
-
-    res.send("User is deleted");
-  } catch (err) {
-    res.status(400).send("Smth went wrong");
-  }
-});
-
-// Find a user by Id
-app.get("/user/:id", async (req, res) => {
-  const userId = req.body.userId;
-
-  try {
-    const user = await User.findById(userId).exec();
+    const user = req.user;
 
     res.send(user);
   } catch (err) {
-    res.status(400).send("Smth went wrong");
+    res.status(400).send("Error: " + err.message);
   }
 });
 
-// Feed API- get all usres from DB
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (err) {
-    res.status(400).send("Smth went wrong");
-  }
-});
+//Sending connection request
 
-//Update data of the user
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
-  const data = req.body;
-  try {
-    const ALLOWED_UPDATES = ["photoURL", "about", "gender", "age", "skills"];
-    const isUpdateAllowed = Object.keys(data).every((k) => {
-      ALLOWED_UPDATES.includes(k);
-    });
-    if (!isUpdateAllowed) {
-      throw new Error("Update is not allowed");
-    }
-    const user = await User.findByIdAndUpdate({ _id: userId }, data, {
-      runValidators: "true",
-    });
-    res.send("User updated");
-  } catch (err) {
-    res.status(400).send("Update failed:" + err.message);
-  }
+app.post("/sendingConectionRequest", userAuth, async (req, res) => {
+  const user= req.user
+  res.send(user.firstName +" is sedning conection request");
 });
 
 connetcDB()
