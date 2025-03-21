@@ -3,6 +3,7 @@ const { userAuth } = require("../middleWares/auth");
 const requestRouter = express.Router();
 const ConnectionRequest = require("../models/connectionRecuest");
 const User = require("../models/user");
+const sendEmail = require("../utils/sendEmail");
 
 //Sending connection request
 requestRouter.post(
@@ -42,6 +43,10 @@ requestRouter.post(
           .json({ message: "Connection Request is already exists" });
       }
       const data = await connnectionRequest.save();
+
+      const emailRes= await sendEmail.run();
+      console.log("emailRes",emailRes)
+
       res.json({
         message: `${fromUser.firstName} ${status} ${toUser.firstName}`,
         data,
