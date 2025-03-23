@@ -3,6 +3,7 @@ const { userAuth } = require("../middleWares/auth");
 const requestRouter = express.Router();
 const ConnectionRequest = require("../models/connectionRecuest");
 const User = require("../models/user");
+
 const sendEmail = require("../utils/sendEmail");
 
 //Sending connection request
@@ -44,12 +45,15 @@ requestRouter.post(
       }
       const data = await connnectionRequest.save();
 
-      const emailRes= await sendEmail.run();
-      console.log("emailRes",emailRes)
+      const emailRes = await sendEmail.run(
+        `A new friend request  from ${fromUser.firstName}`, `${fromUser.firstName}  ${status} ${toUser.firstName}`
+      );
+      console.log(emailRes, "email response");
 
       res.json({
         message: `${fromUser.firstName} ${status} ${toUser.firstName}`,
         data,
+        emailRes,
       });
     } catch (err) {
       res.status(400).send("ERORR" + err.message);
@@ -59,12 +63,12 @@ requestRouter.post(
 
 // Review connnection request
 requestRouter.post(
-  "/request/review/:status/:requestId", 
+  "/request/review/:status/:requestId",
   userAuth,
   async (req, res) => {
     try {
       const loggedInUser = req.user;
-      const { status, requestId } = req.params; 
+      const { status, requestId } = req.params;
 
       const allowedStatus = ["accepted", "rejected"];
       if (!allowedStatus.includes(status)) {
@@ -81,10 +85,10 @@ requestRouter.post(
           .status(404)
           .json({ message: "Connection Request is not found" });
       }
-      connectionRequest.status=status
-      const data=await connectionRequest.save()
+      connectionRequest.status = status;
+      const data = await connectionRequest.save();
 
-      res.json({message:"Connection Request is " + status,data})
+      res.json({ message: "Connection Request is " + status, data });
     } catch (err) {
       res.status(400).send("ERORR" + err.message);
     }
