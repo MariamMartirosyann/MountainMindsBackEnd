@@ -1,8 +1,6 @@
 const socket = require("socket.io");
 const crypto = require("crypto");
 const Chat = require("../models/chat");
-const { Connection } = require("mongoose");
-const { stat } = require("fs");
 
 const getSecretRoomId = (userId, targetUserId) => {
   return crypto
@@ -18,8 +16,24 @@ const inishializeSocket = (server) => {
     },
   });
 
+  // Memory map to track online users: { userId: socketId }
+  const onlineUsers = new Map();
+
   io.on("connection", (socket) => {
     //Handle socket events here
+     console.log("🔌 A user connected:", socket.id);
+
+  // Step 1: User joins with their ID
+  socket.on("userConnected", (userId) => {
+    console.log(`✅ User ${userId} connected with socket ${socket.id}`);
+    onlineUsers.set(userId, socket.id);
+
+    // Notify others
+    
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+       console.log("🟢 Online users 1:", Array.from(onlineUsers.keys()));
+  });
+   
 
     socket.on("joinChat", ({ firstName, lastName, userId, targetUserId }) => {
       const roomId = getSecretRoomId(userId, targetUserId);
@@ -63,9 +77,19 @@ const inishializeSocket = (server) => {
       }
     );
 
+
     socket.on("disconnect", () => {
-      console.log("user disconnected", socket.id);
-    });
+    console.log("❌ A user disconnected:", socket.id);
+    // Remove user by socketId
+    for (const [userId, id] of onlineUsers.entries()) {
+      if (id === socket.id) {
+        onlineUsers.delete(userId);
+        break;
+      }
+    }
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+  });
+   
   });
 };
 
