@@ -21,23 +21,41 @@ const inishializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     //Handle socket events here
-     console.log("🔌 A user connected:", socket.id);
+     //console.log("🔌 A user connected:", socket.id);
 
   // Step 1: User joins with their ID
   socket.on("userConnected", (userId) => {
-    console.log(`✅ User ${userId} connected with socket ${socket.id}`);
+   // console.log(`✅ User ${userId} connected with socket ${socket.id}`);
     onlineUsers.set(userId, socket.id);
 
     // Notify others
     
     io.emit("onlineUsers", Array.from(onlineUsers.keys()));
-       console.log("🟢 Online users 1:", Array.from(onlineUsers.keys()));
+      // console.log("🟢 Online users 1:", Array.from(onlineUsers.keys()));
   });
    
 
+    // User is typing event
+  socket.on("typing", ({ firstName, lastName,userId, targetUserId }) => {
+    const roomId = getSecretRoomId(userId, targetUserId);
+    // Notify the other user in the room that this user is typing
+    socket.to(roomId).emit("typing", { userId });
+    console.log(
+      `${firstName +" "+ lastName} is typing in room ${roomId} to user ${targetUserId}`
+    );
+  });
+
+  socket.on("stopTyping", ({firstName, lastName, userId, targetUserId }) => {
+    const roomId = getSecretRoomId(userId, targetUserId);
+    socket.to(roomId).emit("stopTyping", { userId });
+    console.log(
+      `${firstName + lastName} stopped typing in room ${roomId} to user ${targetUserId}`
+    );
+  });
+
     socket.on("joinChat", ({ firstName, lastName, userId, targetUserId }) => {
       const roomId = getSecretRoomId(userId, targetUserId);
-      console.log(firstName + " " + lastName + " is started " + roomId);
+     // console.log(firstName + " " + lastName + " is started " + roomId);
       socket.join(roomId);
     });
 
@@ -79,7 +97,7 @@ const inishializeSocket = (server) => {
 
 
     socket.on("disconnect", () => {
-    console.log("❌ A user disconnected:", socket.id);
+    //console.log("❌ A user disconnected:", socket.id);
     // Remove user by socketId
     for (const [userId, id] of onlineUsers.entries()) {
       if (id === socket.id) {
