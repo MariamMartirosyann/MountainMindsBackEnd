@@ -73,13 +73,15 @@ const inishializeSocket = (server) => {
             chat = new Chat({
               participants: [userId, targetUserId],
               messages: [],
+              createdAt: new Date()
             });
           }
 
-          chat.messages.push({ senderId: userId, text });
+         
+          chat.messages.push({ senderId: userId, text,  createdAt: new Date(), });
           await chat.save();
 
-          io.to(roomId).emit("messageReceived", { firstName, lastName, text });
+          io.to(roomId).emit("messageReceived", { firstName, lastName, text,  createdAt:chat.createdAt });
           console.log(
             firstName +
               " " +
